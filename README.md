@@ -2,6 +2,14 @@
 
 > Chrome 扩展：一键提取 Perplexity.ai 文章为干净的 Markdown 格式。支持文章标题、首图、章节结构等完整保留。
 
+## 效果展示
+
+### 原文页面
+![Perplexity 原文](assets/perplexity-original.png)
+
+### 提取效果
+![提取效果](assets/perplexity-clipped.png)
+
 ## 功能特点
 
 - 🎯 专注于 Perplexity.ai 文章页面
