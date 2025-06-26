@@ -2,16 +2,246 @@
 <html>
 <meta charset="utf-8">
 <style>
-  body{font-family:sans-serif;width:320px;margin:10px}
-  select,button,textarea{width:100%;margin-top:8px}
-  textarea{height:160px}
+  body {
+    font-family: sans-serif;
+    width: 380px;
+    margin: 10px;
+    font-size: 14px;
+  }
+  
+  select, button, textarea {
+    width: 100%;
+    margin-top: 8px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+  
+  button {
+    background: #007cba;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+  }
+  
+  button:hover {
+    background: #005a87;
+  }
+  
+  button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+  }
+  
+  .anytype-btn {
+    background: #ff6b6b;
+  }
+  
+  .anytype-btn:hover {
+    background: #ff5252;
+  }
+  
+  textarea {
+    height: 240px;
+    resize: vertical;
+  }
+  
+  .settings-section {
+    background: #f5f5f5;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+  }
+  
+  .setting-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  
+  .setting-item label {
+    flex-grow: 1;
+    margin-right: 10px;
+  }
+  
+  input[type="checkbox"] {
+    margin: 0;
+    width: auto;
+  }
+  
+  .status {
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 3px;
+    margin-top: 5px;
+  }
+  
+  .status.success {
+    background: #d4edda;
+    color: #155724;
+  }
+  
+  .status.error {
+    background: #f8d7da;
+    color: #721c24;
+  }
+  
+  .status.info {
+    background: #d1ecf1;
+    color: #0c5460;
+  }
+  
+  .hidden {
+    display: none;
+  }
+  
+  .modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+  }
+  
+  .modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    width: 320px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  
+  .form-group {
+    margin-bottom: 15px;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+  }
+  
+  .button-group {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .button-group button {
+    flex: 1;
+  }
+  
+  .template-list {
+    max-height: 150px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-top: 8px;
+  }
+  
+  .template-item {
+    padding: 8px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .template-item:hover {
+    background: #f5f5f5;
+  }
+  
+  .template-item.selected {
+    background: #e0f7fa;
+  }
+  
+  .template-item:last-child {
+    border-bottom: none;
+  }
 </style>
 <body>
+  <!-- 设置区域 -->
+  <div class="settings-section">
+    <div class="setting-item">
+      <label>启用 Anytype 导出</label>
+      <input type="checkbox" id="enableAnytype">
+    </div>
+    <div id="anytypeStatus" class="status info hidden">
+      启用后可将内容导出到 Anytype
+    </div>
+  </div>
+
+  <!-- 主功能区域 -->
   <label>抽取类别
-    <select id="category"><option value="perplexity">perplexity</option></select>
+    <select id="category">
+      <option value="perplexity">Perplexity 文章</option>
+    </select>
   </label>
+  
   <button id="extract">抽取并复制 Markdown</button>
+  
+  <!-- Anytype 导出按钮 -->
+  <button id="exportAnytype" class="anytype-btn hidden">
+    🚀 导出到 Anytype
+  </button>
+  
   <textarea id="output" placeholder="结果显示在此，已自动复制"></textarea>
+
+  <!-- 配对验证码模态框 -->
+  <div id="pairingModal" class="modal hidden">
+    <div class="modal-content">
+      <h3>连接到 Anytype</h3>
+      <p>请在 Anytype 应用中查看弹出的四位验证码，并在下方输入：</p>
+      <div class="form-group">
+        <label>验证码</label>
+        <input type="text" id="verificationCode" placeholder="输入四位数字" maxlength="4">
+      </div>
+      <div class="button-group">
+        <button id="cancelPairing">取消</button>
+        <button id="confirmPairing">确认</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 空间和类型选择模态框 -->
+  <div id="exportModal" class="modal hidden">
+    <div class="modal-content">
+      <h3>导出到 Anytype</h3>
+      <div class="form-group">
+        <label>选择空间</label>
+        <select id="spaceSelect"></select>
+      </div>
+      <div class="form-group">
+        <label>选择类型</label>
+        <select id="typeSelect"></select>
+      </div>
+      <div class="form-group">
+        <label>选择模板 (可选)</label>
+        <select id="templateSelect">
+          <option value="">不使用模板</option>
+        </select>
+        <div id="templateList" class="template-list hidden">
+          <!-- 模板列表将在这里动态生成 -->
+        </div>
+      </div>
+      <div class="form-group">
+        <label>对象标题</label>
+        <input type="text" id="objectTitle" placeholder="输入标题">
+      </div>
+      <div class="button-group">
+        <button id="cancelExport">取消</button>
+        <button id="confirmExport">确认导出</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="anytype-api.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

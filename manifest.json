@@ -1,18 +1,25 @@
 {
   "manifest_version": 3,
   "name": "Perplexity Clipper",
-  "version": "0.1.0",
-  "description": "一键提取 Perplexity.ai 文章为干净的 Markdown 格式 | Chrome Extension for clipping Perplexity.ai articles to clean Markdown",
+  "version": "0.2.0",
+  "description": "一键提取 Perplexity.ai 文章为干净的 Markdown 格式，支持导出到 Anytype | Chrome Extension for clipping Perplexity.ai articles to clean Markdown and export to Anytype",
   "action": { "default_popup": "popup.html" },
 
   "content_scripts": [
     {
-      "matches": ["https://www.perplexity.ai/page/*"],
+      "matches": [
+        "https://www.perplexity.ai/page/*",
+        "https://www.perplexity.ai/discover/*"
+      ],
       "js": ["content-perplexity.js"],
       "run_at": "document_idle"
     }
   ],
 
-  "permissions": ["activeTab", "scripting", "clipboardWrite", "downloads"],
-  "host_permissions": ["https://www.perplexity.ai/page/*"]
+  "permissions": ["activeTab", "scripting", "clipboardWrite", "downloads", "storage"],
+  "host_permissions": [
+    "https://www.perplexity.ai/page/*", 
+    "https://www.perplexity.ai/discover/*",
+    "http://localhost:31009/*"
+  ]
 }
