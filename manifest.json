@@ -1,9 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "Perplexity → Markdown",
+  "name": "Perplexity Clipper",
   "version": "0.1.0",
-  "description": "将 Perplexity.ai 文章一键转换为 Markdown",
+  "description": "一键提取 Perplexity.ai 文章为干净的 Markdown 格式 | Chrome Extension for clipping Perplexity.ai articles to clean Markdown",
   "action": { "default_popup": "popup.html" },
+  "icons": { "128": "icons/icon128.png" },
 
   "content_scripts": [
     {

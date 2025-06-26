@@ -1,14 +1,30 @@
-# Perplexity → Markdown Chrome Extension
+# Perplexity Clipper
 
-> 一键把 `https://www.perplexity.ai/page/*` 文章抽取为干净的 Markdown (H1/H2 结构、正文、首图)。
+> Chrome 扩展：一键提取 Perplexity.ai 文章为干净的 Markdown 格式。支持文章标题、首图、章节结构等完整保留。
 
-- **使用**  
-  1. `git clone … && cd perplexity-md`  
-  2. `chrome://extensions` → 开启「开发者模式」 → 「加载已解压的扩展」  
-  3. 打开任何 Perplexity 文章 → 点击扩展 → Done!
+## 功能特点
 
-- **功能**  
-  - 复制到剪贴板并在弹窗中展示  
-  - 可选下载 `.md` 文件（在 `popup.js` 取消注释即可）
+- 🎯 专注于 Perplexity.ai 文章页面
+- 📝 提取为干净的 Markdown 格式
+- 🖼 保留文章首图
+- 📑 保持原文章结构（H1/H2）
+- 📋 自动复制到剪贴板
+- 💾 可选下载 .md 文件
 
-MIT License · Made with ❤️
+## 使用方法
+
+1. `git clone … && cd perplexity-clipper`
+2. 打开 Chrome 扩展管理页面 `chrome://extensions`
+3. 开启「开发者模式」
+4. 点击「加载已解压的扩展」
+5. 打开任意 Perplexity 文章页面
+6. 点击扩展图标，一键提取！
+
+## 开发相关
+
+- 可在 `popup.js` 中取消注释以启用 .md 文件下载功能
+- 欢迎提交 Issue 和 PR
+
+## License
+
+MIT License · Made with ❤️ by [SockingPanda](https://github.com/SockingPanda)
