@@ -1,0 +1,17 @@
+<!doctype html>
+<html>
+<meta charset="utf-8">
+<style>
+  body{font-family:sans-serif;width:320px;margin:10px}
+  select,button,textarea{width:100%;margin-top:8px}
+  textarea{height:160px}
+</style>
+<body>
+  <label>抽取类别
+    <select id="category"><option value="perplexity">perplexity</option></select>
+  </label>
+  <button id="extract">抽取并复制 Markdown</button>
+  <textarea id="output" placeholder="结果显示在此，已自动复制"></textarea>
+  <script src="popup.js"></script>
+</body>
+</html>

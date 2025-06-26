@@ -1,0 +1,15 @@
+name: Zip Extension
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: zip -r perplexity-md.zip . -x "*.git*"
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: perplexity-md.zip 
