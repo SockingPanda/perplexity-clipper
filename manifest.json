@@ -4,7 +4,6 @@
   "version": "0.1.0",
   "description": "将 Perplexity.ai 文章一键转换为 Markdown",
   "action": { "default_popup": "popup.html" },
-  "icons": { "128": "icons/icon128.png" },
 
   "content_scripts": [
     {
