@@ -91,6 +91,17 @@ async function extract() {
   console.log('📌 主标题:', mainTitle);
   let md = `# ${mainTitle}\n\n`;
 
+  // 获取文章描述
+  const descXPath = '//*[@id="__next"]/main/div[1]/div/div[2]/div/div[1]/div[4]/div/div/div[1]/div[2]/div/div[2]/div[1]/div/div[2]';
+  const descEl = getElementByXPath(descXPath);
+  if (descEl) {
+    const description = processContent(descEl);
+    console.log('📝 文章描述:', description ? description.substring(0, 100) + (description.length > 100 ? '...' : '') : '(无描述)');
+    if (description) {
+      md += `> ${description}\n\n`;
+    }
+  }
+
   // 获取大图
   const imgXPath = '//*[@id="__next"]/main/div[1]/div/div[2]/div/div[1]/div[4]/div/div/div[1]/div[2]/div/div[2]/div[2]/div/div/div/div/div/div/div/div[1]/div/div/div/img';
   const img = getElementByXPath(imgXPath);
