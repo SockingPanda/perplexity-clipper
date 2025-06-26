@@ -11,10 +11,10 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-      - run: zip -r perplexity-md.zip . -x "*.git*"
+      - run: zip -r perplexity-clipper.zip . -x "*.git*"
       - uses: softprops/action-gh-release@v2
         with:
-          files: perplexity-md.zip
+          files: perplexity-clipper.zip
           draft: false
           generate_release_notes: true
         env:
