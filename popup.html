@@ -164,6 +164,145 @@
   .template-item:last-child {
     border-bottom: none;
   }
+
+  /* Deep Research 选择界面样式 */
+  .selection-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+  }
+
+  .selection-header h4 {
+    margin: 0;
+    font-size: 14px;
+    color: #333;
+  }
+
+  .selection-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .small-btn {
+    padding: 4px 10px;
+    font-size: 11px;
+    margin: 0;
+    width: auto;
+    background: #f8f9fa;
+    color: #495057;
+    border: 1px solid #dee2e6;
+  }
+
+  .small-btn:hover {
+    background: #e9ecef;
+    color: #495057;
+  }
+
+  .refresh-btn {
+    background: #28a745;
+    color: white;
+    border: 1px solid #28a745;
+  }
+
+  .refresh-btn:hover {
+    background: #218838;
+  }
+
+  .mode-indicator {
+    font-size: 10px;
+    color: #6c757d;
+    font-style: italic;
+  }
+
+  .item-list {
+    max-height: 220px;
+    overflow-y: auto;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    background: #fff;
+  }
+
+  .research-item {
+    padding: 12px;
+    border-bottom: 1px solid #f1f3f4;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+
+  .research-item:hover {
+    background-color: #f8f9fa;
+  }
+
+  .research-item.selected-single {
+    background-color: #e3f2fd;
+    border-left: 3px solid #2196f3;
+  }
+
+  .research-item:last-child {
+    border-bottom: none;
+  }
+
+  .research-item input[type="checkbox"],
+  .research-item input[type="radio"] {
+    margin: 3px 0 0 0;
+    width: auto;
+    cursor: pointer;
+  }
+
+  .research-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .research-title {
+    font-weight: 600;
+    font-size: 13px;
+    margin-bottom: 6px;
+    color: #212529;
+    line-height: 1.3;
+  }
+
+  .research-preview {
+    font-size: 11px;
+    color: #6c757d;
+    line-height: 1.4;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    margin-bottom: 6px;
+  }
+
+  .research-meta {
+    font-size: 10px;
+    color: #adb5bd;
+    display: flex;
+    gap: 12px;
+  }
+
+  .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .selection-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .selection-actions button {
+    flex: 1;
+  }
 </style>
 <body>
   <!-- 设置区域 -->
@@ -181,6 +320,7 @@
   <label>抽取类别
     <select id="category">
       <option value="perplexity">Perplexity 文章</option>
+      <option value="chatgpt">ChatGPT Deep Research</option>
     </select>
   </label>
   
@@ -191,6 +331,25 @@
     🚀 导出到 Anytype
   </button>
   
+  <!-- Deep Research 选择界面 -->
+  <div id="selectionArea" class="hidden">
+    <div class="selection-header">
+      <div>
+        <h4 id="selectionTitle">选择要导出的 Deep Research 内容</h4>
+        <div class="mode-indicator" id="modeIndicator">点击项目自动复制</div>
+      </div>
+      <div class="selection-controls">
+        <button id="refreshItems" type="button" class="small-btn refresh-btn">🔄 刷新</button>
+        <button id="selectAll" type="button" class="small-btn hidden">全选</button>
+        <button id="selectNone" type="button" class="small-btn hidden">全不选</button>
+      </div>
+    </div>
+    <div id="itemList" class="item-list"></div>
+    <div class="selection-actions">
+      <button id="generateSelected" class="hidden">生成选中内容的 Markdown</button>
+    </div>
+  </div>
+
   <textarea id="output" placeholder="结果显示在此，已自动复制"></textarea>
 
   <!-- 配对验证码模态框 -->

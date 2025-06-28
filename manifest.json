@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Perplexity Clipper",
   "version": "0.2.0",
-  "description": "一键提取 Perplexity.ai 文章为干净的 Markdown 格式，支持导出到 Anytype | Chrome Extension for clipping Perplexity.ai articles to clean Markdown and export to Anytype",
+  "description": "一键提取 Perplexity.ai 和 ChatGPT Deep Research 内容为干净的 Markdown 格式，支持导出到 Anytype | Chrome Extension for clipping Perplexity.ai and ChatGPT Deep Research to clean Markdown and export to Anytype",
   "action": { "default_popup": "popup.html" },
 
   "content_scripts": [
@@ -13,6 +13,13 @@
       ],
       "js": ["content-perplexity.js"],
       "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://chatgpt.com/c/*"
+      ],
+      "js": ["content-chatgpt.js"],
+      "run_at": "document_idle"
     }
   ],
 
@@ -20,6 +27,7 @@
   "host_permissions": [
     "https://www.perplexity.ai/page/*", 
     "https://www.perplexity.ai/discover/*",
+    "https://chatgpt.com/c/*",
     "http://localhost:31009/*"
   ]
 }
