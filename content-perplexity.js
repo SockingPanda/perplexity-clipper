@@ -2,29 +2,10 @@
  * 通用工具函数
  */
 const Utils = {
-  sleep: ms => new Promise(r => setTimeout(r, ms)),
-  
-  async waitForElement(sel, t=6000) {
-    const s = performance.now();
-    while(performance.now()-s < t) {
-      const e = document.querySelector(sel);
-      if(e) return e;
-      await this.sleep(200);
-    }
-  },
-  
-  getElementByXPath(xpath) {
-    return document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-  },
-  
-  getAllElementsByXPath(xpath) {
-    const result = document.evaluate(xpath, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-    const elements = [];
-    for (let i = 0; i < result.snapshotLength; i++) {
-      elements.push(result.snapshotItem(i));
-    }
-    return elements;
-  },
+  sleep,
+  waitForElement,
+  getElementByXPath,
+  getAllElementsByXPath,
   
   /**
    * 处理文章描述，确保每段都以 > 开头，但空行不带>符号

@@ -11,14 +11,14 @@
         "https://www.perplexity.ai/page/*",
         "https://www.perplexity.ai/discover/*"
       ],
-      "js": ["content-perplexity.js"],
+      "js": ["utils.js", "content-perplexity.js"],
       "run_at": "document_idle"
     },
     {
       "matches": [
         "https://chatgpt.com/c/*"
       ],
-      "js": ["content-chatgpt.js"],
+      "js": ["utils.js", "content-chatgpt.js"],
       "run_at": "document_idle"
     }
   ],
