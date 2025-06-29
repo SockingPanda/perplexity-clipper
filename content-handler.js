@@ -1,0 +1,251 @@
+export default class ContentHandler {
+  constructor() {
+    this.currentMarkdown = '';
+    this.currentCategory = 'perplexity';
+    this.extractedItems = [];
+    this.pageInfo = null;
+    this.isMultiSelectMode = false;
+    this.selectedItemsForBatch = [];
+    this._initElements();
+  }
+
+  _initElements() {
+    this.extractBtn = document.getElementById('extract');
+    this.outputTextarea = document.getElementById('output');
+    this.categorySelect = document.getElementById('category');
+    this.selectionArea = document.getElementById('selectionArea');
+    this.itemList = document.getElementById('itemList');
+    this.selectAllBtn = document.getElementById('selectAll');
+    this.selectNoneBtn = document.getElementById('selectNone');
+    this.generateSelectedBtn = document.getElementById('generateSelected');
+    this.refreshItemsBtn = document.getElementById('refreshItems');
+    this.selectionTitle = document.getElementById('selectionTitle');
+    this.modeIndicator = document.getElementById('modeIndicator');
+  }
+
+  setAnytypeManager(manager) {
+    this.anytype = manager;
+  }
+
+  onCategoryChange() {
+    this.currentCategory = this.categorySelect.value;
+    this.updateExtractButtonText();
+  }
+
+  updateExtractButtonText() {
+    const texts = {
+      perplexity: '抽取并复制 Markdown',
+      chatgpt: '提取 Deep Research 内容'
+    };
+    this.extractBtn.textContent = texts[this.currentCategory] || texts.perplexity;
+  }
+
+  isPerplexityUrl(url) {
+    return (
+      url.includes('perplexity.ai/page/') ||
+      (url.includes('perplexity.ai/discover/') &&
+       /perplexity\.ai\/discover\/[^/]+\/[^/]+/.test(url))
+    );
+  }
+
+  isChatGPTUrl(url) {
+    return url.includes('chatgpt.com/c/');
+  }
+
+  isValidUrl(url, category) {
+    if (category === 'perplexity') return this.isPerplexityUrl(url);
+    if (category === 'chatgpt') return this.isChatGPTUrl(url);
+    return false;
+  }
+
+  getInvalidUrlMessage(category) {
+    return category === 'chatgpt'
+      ? '❌ 请在 ChatGPT 会话页面使用此扩展'
+      : '❌ 请在 Perplexity 文章页面使用此扩展';
+  }
+
+  async extractContent() {
+    try {
+      this.extractBtn.disabled = true;
+      const loading = {
+        perplexity: '提取中...',
+        chatgpt: '分析Deep Research中...'
+      };
+      this.extractBtn.textContent = loading[this.currentCategory] || '提取中...';
+
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (!this.isValidUrl(tab.url, this.currentCategory)) {
+        alert(this.getInvalidUrlMessage(this.currentCategory));
+        return;
+      }
+
+      let action = this.currentCategory === 'perplexity' ? 'extract-perplexity' : 'extract';
+      const response = await this.sendMessageToTab(tab.id, { action });
+      if (response.error) {
+        alert('❌ 提取失败: ' + response.error);
+        return;
+      }
+
+      if (response.mode === 'selection') {
+        this.extractedItems = response.items;
+        this.pageInfo = response.pageInfo;
+        this.showSelectionInterface();
+        return;
+      }
+
+      this.currentMarkdown = response.markdown;
+      this.outputTextarea.value = this.currentMarkdown;
+      await navigator.clipboard.writeText(this.currentMarkdown);
+      if (this.anytype && this.anytype.isEnabled() && this.currentMarkdown) {
+        this.anytype.enableExport();
+      }
+    } catch (err) {
+      alert('❌ ' + err.message);
+    } finally {
+      this.extractBtn.disabled = false;
+      this.updateExtractButtonText();
+    }
+  }
+
+  async sendMessageToTab(tabId, message) {
+    return new Promise((resolve, reject) => {
+      chrome.tabs.sendMessage(tabId, message, (response) => {
+        if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
+        else resolve(response);
+      });
+    });
+  }
+
+  showSelectionInterface() {
+    this.outputTextarea.style.display = 'none';
+    this.selectionArea.classList.remove('hidden');
+    this.isMultiSelectMode = this.anytype ? this.anytype.isEnabled() : false;
+    this.updateSelectionMode();
+    this.renderItemList();
+  }
+
+  updateSelectionMode() {
+    if (this.isMultiSelectMode) {
+      this.selectionTitle.textContent = '选择要导出的 Deep Research 内容';
+      this.modeIndicator.textContent = '多选模式 - 选择后直接点击导出按钮';
+      this.selectAllBtn.classList.remove('hidden');
+      this.selectNoneBtn.classList.remove('hidden');
+    } else {
+      this.selectionTitle.textContent = '选择要复制的 Deep Research 内容';
+      this.modeIndicator.textContent = '单选模式 - 点击项目自动复制';
+      this.selectAllBtn.classList.add('hidden');
+      this.selectNoneBtn.classList.add('hidden');
+    }
+  }
+
+  renderItemList() {
+    this.itemList.innerHTML = '';
+    this.extractedItems.forEach((item, i) => {
+      const div = document.createElement('div');
+      div.className = 'research-item';
+      div.dataset.index = i;
+      const preview = item.content.substring(0, 200).replace(/\n/g, ' ') + (item.content.length > 200 ? '...' : '');
+      const inputType = this.isMultiSelectMode ? 'checkbox' : 'radio';
+      const inputName = this.isMultiSelectMode ? '' : 'name="research-item"';
+      const checked = this.isMultiSelectMode ? 'checked' : '';
+      div.innerHTML = `
+        <input type="${inputType}" id="item-${i}" ${inputName} ${checked}>
+        <div class="research-content">
+          <div class="research-title">${item.title}</div>
+          <div class="research-preview">${preview}</div>
+        </div>`;
+      div.addEventListener('click', (e) => {
+        if (e.target.type === 'checkbox' || e.target.type === 'radio') return;
+        const input = div.querySelector('input');
+        if (this.isMultiSelectMode) input.checked = !input.checked;
+        else this.copySingleItem(item);
+      });
+      this.itemList.appendChild(div);
+    });
+  }
+
+  hideSelectionInterface() {
+    this.selectionArea.classList.add('hidden');
+    this.outputTextarea.style.display = 'block';
+  }
+
+  async refreshExtractedItems() {
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (!this.isValidUrl(tab.url, this.currentCategory)) {
+        alert(this.getInvalidUrlMessage(this.currentCategory));
+        return;
+      }
+      const response = await this.sendMessageToTab(tab.id, { action: 'extract' });
+      if (response.error) {
+        alert('❌ 刷新失败: ' + response.error);
+        return;
+      }
+      if (response.mode === 'selection') {
+        this.extractedItems = response.items;
+        this.pageInfo = response.pageInfo;
+        this.renderItemList();
+      }
+    } catch (err) {
+      alert('❌ 刷新失败: ' + err.message);
+    }
+  }
+
+  async copySingleItem(item) {
+    try {
+      await navigator.clipboard.writeText(item.content);
+      this.currentMarkdown = item.content;
+      this.outputTextarea.value = item.content;
+    } catch (err) {
+      alert('❌ 复制失败: ' + err.message);
+    }
+  }
+
+  selectAllItems() {
+    this.itemList.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
+  }
+
+  selectNoneItems() {
+    this.itemList.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+  }
+
+  async generateSelectedMarkdown() {
+    try {
+      const checkboxes = this.itemList.querySelectorAll('input[type="checkbox"]');
+      const selected = [];
+      checkboxes.forEach((cb, i) => { if (cb.checked) selected.push(this.extractedItems[i]); });
+      this.selectedItemsForBatch = selected;
+      if (selected.length === 0) {
+        alert('请至少选择一个项目');
+        return;
+      }
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      const response = await this.sendMessageToTab(tab.id, {
+        action: 'generateMarkdown',
+        selectedItems: selected,
+        pageInfo: this.pageInfo
+      });
+      if (response.error) {
+        alert('❌ 生成失败: ' + response.error);
+        return;
+      }
+      this.currentMarkdown = response.markdown;
+      this.outputTextarea.value = this.currentMarkdown;
+      await navigator.clipboard.writeText(this.currentMarkdown);
+      this.hideSelectionInterface();
+      if (this.anytype && this.anytype.isEnabled()) this.anytype.enableExport();
+    } catch (err) {
+      alert('❌ 生成失败: ' + err.message);
+    }
+  }
+
+  generateDefaultTitle() {
+    const lines = this.currentMarkdown.split('\n');
+    for (const line of lines) {
+      const t = line.trim();
+      if (t && !t.startsWith('#')) return t.substring(0, 100);
+      if (t.startsWith('# ')) return t.substring(2).trim();
+    }
+    return `内容剪藏 - ${new Date().toLocaleString()}`;
+  }
+}
