@@ -18,19 +18,19 @@ class AnytypeAPI {
   /**
    * 获取请求头
    */
-  getHeaders(includeAuth = true) {
+  async getHeaders(includeAuth = true) {
     const headers = {
       'Content-Type': 'application/json',
       'Anytype-Version': this.apiVersion
     };
-    
+
     if (includeAuth) {
-      const apiKey = this.getStoredApiKey();
+      const apiKey = await this.getStoredApiKey();
       if (apiKey) {
         headers['Authorization'] = `Bearer ${apiKey}`;
       }
     }
-    
+
     console.log('📋 请求头:', headers);
     return headers;
   }
@@ -38,10 +38,12 @@ class AnytypeAPI {
   /**
    * 获取存储的 API Key
    */
-  getStoredApiKey() {
-    // Chrome Extension Storage API 是异步的，这里先用同步方式处理
-    // 实际使用时需要在调用时处理异步
-    return localStorage.getItem('anytype_api_key');
+  async getStoredApiKey() {
+    return new Promise((resolve) => {
+      chrome.storage.local.get(['anytype_api_key'], (result) => {
+        resolve(result.anytype_api_key);
+      });
+    });
   }
 
   /**
@@ -117,7 +119,7 @@ class AnytypeAPI {
     try {
       const response = await fetch(url, {
         method: 'POST',
-        headers: this.getHeaders(false),
+        headers: await this.getHeaders(false),
         body: JSON.stringify(requestBody)
       });
 
@@ -175,7 +177,7 @@ class AnytypeAPI {
     try {
       const response = await fetch(url, {
         method: 'POST',
-        headers: this.getHeaders(false),
+        headers: await this.getHeaders(false),
         body: JSON.stringify(requestBody)
       });
 
@@ -241,7 +243,7 @@ class AnytypeAPI {
       const response = await fetch(url, {
         method: 'GET',
         headers: {
-          ...this.getHeaders(),
+          ...(await this.getHeaders()),
           'Authorization': `Bearer ${apiKey}`
         }
       });
@@ -292,7 +294,7 @@ class AnytypeAPI {
       const response = await fetch(url, {
         method: 'GET',
         headers: {
-          ...this.getHeaders(),
+          ...(await this.getHeaders()),
           'Authorization': `Bearer ${apiKey}`
         }
       });
@@ -343,7 +345,7 @@ class AnytypeAPI {
       const response = await fetch(url, {
         method: 'GET',
         headers: {
-          ...this.getHeaders(),
+          ...(await this.getHeaders()),
           'Authorization': `Bearer ${apiKey}`
         }
       });
@@ -394,7 +396,7 @@ class AnytypeAPI {
       const response = await fetch(url, {
         method: 'GET',
         headers: {
-          ...this.getHeaders(),
+          ...(await this.getHeaders()),
           'Authorization': `Bearer ${apiKey}`
         }
       });
@@ -441,7 +443,7 @@ class AnytypeAPI {
       const response = await fetch(url, {
         method: 'POST',
         headers: {
-          ...this.getHeaders(),
+          ...(await this.getHeaders()),
           'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify(objectData)
