@@ -58,6 +58,24 @@ export default class ContentHandler {
     return false;
   }
 
+  determineCategory(url) {
+    if (this.isChatGPTUrl(url)) return 'chatgpt';
+    if (this.isPerplexityUrl(url)) return 'perplexity';
+    return 'perplexity';
+  }
+
+  async autoSetCategoryFromCurrentTab() {
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      const cat = this.determineCategory(tab.url || '');
+      this.currentCategory = cat;
+      this.categorySelect.value = cat;
+    } catch (_) {
+      // ignore errors
+    }
+    this.updateExtractButtonText();
+  }
+
   getInvalidUrlMessage(category) {
     return category === 'chatgpt'
       ? '❌ 请在 ChatGPT 会话页面使用此扩展'
@@ -157,10 +175,15 @@ export default class ContentHandler {
           <div class="research-preview">${preview}</div>
         </div>`;
       div.addEventListener('click', (e) => {
-        if (e.target.type === 'checkbox' || e.target.type === 'radio') return;
         const input = div.querySelector('input');
-        if (this.isMultiSelectMode) input.checked = !input.checked;
-        else this.copySingleItem(item);
+        if (this.isMultiSelectMode) {
+          if (e.target !== input) input.checked = !input.checked;
+        } else {
+          input.checked = true;
+          this.highlightSelectedItem(div);
+          this.copySingleItem(item);
+          this.showCopyNotification();
+        }
       });
       this.itemList.appendChild(div);
     });
@@ -169,6 +192,16 @@ export default class ContentHandler {
   hideSelectionInterface() {
     this.selectionArea.classList.add('hidden');
     this.outputTextarea.style.display = 'block';
+  }
+
+  onAnytypeToggle() {
+    if (this.selectionArea.classList.contains('hidden')) return;
+    const newMode = this.anytype ? this.anytype.isEnabled() : false;
+    if (this.isMultiSelectMode !== newMode) {
+      this.isMultiSelectMode = newMode;
+      this.updateSelectionMode();
+      this.renderItemList();
+    }
   }
 
   async refreshExtractedItems() {
@@ -198,9 +231,16 @@ export default class ContentHandler {
       await navigator.clipboard.writeText(item.content);
       this.currentMarkdown = item.content;
       this.outputTextarea.value = item.content;
+      this.showCopyMessage();
     } catch (err) {
       alert('❌ 复制失败: ' + err.message);
     }
+  }
+
+  showCopyMessage() {
+    clearTimeout(this.copyStatusTimeout);
+    this.modeIndicator.textContent = '内容已复制到剪贴板';
+    this.copyStatusTimeout = setTimeout(() => this.updateSelectionMode(), 1500);
   }
 
   selectAllItems() {
@@ -239,6 +279,21 @@ export default class ContentHandler {
     } catch (err) {
       alert('❌ 生成失败: ' + err.message);
     }
+  }
+
+  highlightSelectedItem(div) {
+    this.itemList.querySelectorAll('.research-item').forEach(d => d.classList.remove('selected-single'));
+    div.classList.add('selected-single');
+  }
+
+  showCopyNotification() {
+    const original = this.modeIndicator.textContent;
+    this.modeIndicator.textContent = '内容已复制到剪贴板';
+    setTimeout(() => {
+      if (this.modeIndicator.textContent === '内容已复制到剪贴板') {
+        this.modeIndicator.textContent = original;
+      }
+    }, 1000);
   }
 
   generateDefaultTitle() {

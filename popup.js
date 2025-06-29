@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const anytype = new AnytypeIntegration(content);
   content.setAnytypeManager(anytype);
   await anytype.loadSettings();
+  await content.autoSetCategoryFromCurrentTab();
   await anytype.toggleAnytypeFeature();
   content.updateExtractButtonText();
 

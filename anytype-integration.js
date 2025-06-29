@@ -12,6 +12,10 @@ export default class AnytypeIntegration {
     this._initElements();
   }
 
+  getModuleKey() {
+    return this.contentHandler.currentCategory || 'default';
+  }
+
   _initElements() {
     this.enableAnytypeCheckbox = document.getElementById('enableAnytype');
     this.exportAnytypeBtn = document.getElementById('exportAnytype');
@@ -40,7 +44,7 @@ export default class AnytypeIntegration {
   async loadSettings() {
     const result = await chrome.storage.local.get(['enableAnytype', 'preferences']);
     this.enableAnytypeCheckbox.checked = result.enableAnytype || false;
-    this.preferences = result.preferences || {};
+    this.preferences = result.preferences || { perplexity: {}, chatgpt: {} };
   }
 
   async saveSettings() {
@@ -50,6 +54,16 @@ export default class AnytypeIntegration {
     });
   }
 
+  updatePreferences() {
+    const key = this.getModuleKey();
+    this.preferences[key] = {
+      spaceId: this.spaceSelect.value,
+      typeKey: this.typeSelect.value,
+      templateId: this.templateSelect.value
+    };
+    this.saveSettings();
+  }
+
   async toggleAnytypeFeature() {
     await this.saveSettings();
     if (this.isEnabled()) {
@@ -57,6 +71,9 @@ export default class AnytypeIntegration {
       this.exportAnytypeBtn.disabled = false;
     } else {
       this.exportAnytypeBtn.classList.add('hidden');
+    }
+    if (this.contentHandler) {
+      this.contentHandler.onAnytypeToggle();
     }
   }
 
@@ -137,7 +154,8 @@ export default class AnytypeIntegration {
 
   async showExportOptions() {
     const spaces = await this.api.getSpaces();
-    await this.populateSpaceSelect(spaces);
+    const prefs = this.preferences[this.contentHandler.currentCategory] || {};
+    await this.populateSpaceSelect(spaces, prefs.spaceId, prefs.typeKey, prefs.templateId);
     const title = this.contentHandler.selectedItemsForBatch.length > 1
       ? `将创建 ${this.contentHandler.selectedItemsForBatch.length} 个对象`
       : this.contentHandler.generateDefaultTitle();
@@ -145,7 +163,7 @@ export default class AnytypeIntegration {
     this.showExportModal();
   }
 
-  async populateSpaceSelect(spaces) {
+  async populateSpaceSelect(spaces, selectedId, selectedType, selectedTemplate) {
     this.spaceSelect.innerHTML = '';
     spaces.forEach(space => {
       const opt = document.createElement('option');
@@ -154,16 +172,20 @@ export default class AnytypeIntegration {
       this.spaceSelect.appendChild(opt);
     });
     this.selectedSpaceId = spaces[0]?.id;
-    await this.onSpaceChange();
+    if (selectedId && spaces.find(s => s.id === selectedId)) {
+      this.spaceSelect.value = selectedId;
+      this.selectedSpaceId = selectedId;
+    }
+    await this.onSpaceChange(selectedType, selectedTemplate);
   }
 
-  async onSpaceChange() {
+  async onSpaceChange(selectedType, selectedTemplate) {
     this.selectedSpaceId = this.spaceSelect.value;
     const types = await this.api.getObjectTypes(this.selectedSpaceId);
-    await this.populateTypeSelect(types);
+    await this.populateTypeSelect(types, selectedType, selectedTemplate);
   }
 
-  async populateTypeSelect(types) {
+  async populateTypeSelect(types, selectedType, selectedTemplate) {
     this.typeSelect.innerHTML = '';
     types.forEach(t => {
       const opt = document.createElement('option');
@@ -172,20 +194,25 @@ export default class AnytypeIntegration {
       this.typeSelect.appendChild(opt);
     });
     this.selectedTypeKey = this.typeSelect.options[0].value;
-    await this.onTypeChange();
+    if (selectedType && types.find(t => t.id === selectedType)) {
+      this.typeSelect.value = selectedType;
+      this.selectedTypeKey = selectedType;
+    }
+    await this.onTypeChange(selectedTemplate);
   }
 
-  async onTypeChange() {
+  async onTypeChange(selectedTemplate) {
     this.selectedTypeKey = this.typeSelect.value;
     const templates = await this.api.getTemplates(this.selectedSpaceId, this.selectedTypeKey);
-    this.populateTemplateSelect(templates);
+    this.populateTemplateSelect(templates, selectedTemplate);
   }
 
   onTemplateChange() {
     this.selectedTemplateId = this.templateSelect.value;
+    this.updatePreferences();
   }
 
-  populateTemplateSelect(templates) {
+  populateTemplateSelect(templates, selectedTemplate) {
     this.templateSelect.innerHTML = '<option value="">不使用模板</option>';
     templates.forEach(t => {
       const opt = document.createElement('option');
@@ -194,6 +221,10 @@ export default class AnytypeIntegration {
       this.templateSelect.appendChild(opt);
     });
     this.selectedTemplateId = '';
+    if (selectedTemplate && templates.find(t => t.id === selectedTemplate)) {
+      this.templateSelect.value = selectedTemplate;
+      this.selectedTemplateId = selectedTemplate;
+    }
   }
 
   showExportModal() {
@@ -209,6 +240,9 @@ export default class AnytypeIntegration {
       const spaceId = this.spaceSelect.value;
       const typeKey = this.typeSelect.value;
       const templateId = this.templateSelect.value;
+      const key = this.contentHandler.currentCategory || 'perplexity';
+      this.preferences[key] = { spaceId, typeKey, templateId };
+      await this.saveSettings();
       const items = this.contentHandler.selectedItemsForBatch;
       if (items.length > 1) {
         for (const item of items) {
@@ -228,6 +262,7 @@ export default class AnytypeIntegration {
         await this.api.createObject(spaceId, obj);
       }
       this.closeExportModal();
+      this.updatePreferences();
       alert('✅ 导出成功！对象已创建到 Anytype');
     } catch (e) {
       alert('❌ 导出失败: ' + e.message);
