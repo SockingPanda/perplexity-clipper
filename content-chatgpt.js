@@ -4,129 +4,107 @@
  */
 
 /**
- * 通用工具函数 - 复用自 content-perplexity.js
+ * 通用工具函数 - 与 Perplexity 提取器共享
  */
-const ChatGPTUtils = {
-  sleep,
-  waitForElement,
-  getElementByXPath,
-  getAllElementsByXPath,
 
-  /**
-   * 处理Deep Research内容，转换为Markdown格式
-   */
-  processDeepResearchContent(element) {
-    if (!element) return '';
-    
-    // 创建一个副本以进行处理
-    const container = document.createElement('div');
-    container.innerHTML = element.innerHTML;
-    
-    // 处理标题 - ChatGPT可能使用h1-h6标签
-    for (let i = 1; i <= 6; i++) {
-      const headings = container.querySelectorAll(`h${i}`);
-      headings.forEach(h => {
-        const level = '#'.repeat(i);
-        h.outerHTML = `${level} ${h.textContent.trim()}\n\n`;
-      });
-    }
-    
-    // 处理粗体文本
-    const boldElements = container.querySelectorAll('strong, b');
-    boldElements.forEach(bold => {
-      bold.outerHTML = `**${bold.textContent}**`;
+function processDeepResearchContent(element) {
+  if (!element) return '';
+
+  const container = document.createElement('div');
+  container.innerHTML = element.innerHTML;
+
+  for (let i = 1; i <= 6; i++) {
+    const headings = container.querySelectorAll(`h${i}`);
+    headings.forEach(h => {
+      const level = '#'.repeat(i);
+      h.outerHTML = `${level} ${h.textContent.trim()}\n\n`;
     });
-    
-    // 处理斜体文本
-    const italicElements = container.querySelectorAll('em, i');
-    italicElements.forEach(italic => {
-      italic.outerHTML = `*${italic.textContent}*`;
-    });
-    
-    // 处理代码块
-    const codeBlocks = container.querySelectorAll('pre');
-    codeBlocks.forEach(pre => {
-      const code = pre.querySelector('code');
-      const language = code?.className?.match(/language-(\w+)/)?.[1] || '';
-      const content = code?.textContent || pre.textContent;
-      pre.outerHTML = `\n\`\`\`${language}\n${content}\n\`\`\`\n\n`;
-    });
-    
-    // 处理行内代码
-    const inlineCodes = container.querySelectorAll('code');
-    inlineCodes.forEach(code => {
-      if (!code.closest('pre')) {
-        code.outerHTML = `\`${code.textContent}\``;
-      }
-    });
-    
-    // 处理链接
-    const links = container.querySelectorAll('a');
-    links.forEach(link => {
-      const href = link.getAttribute('href');
-      const text = link.textContent.trim();
-      if (href && text) {
-        link.outerHTML = `[${text}](${href})`;
-      }
-    });
-    
-    // 处理无序列表
-    const unorderedLists = container.querySelectorAll('ul');
-    unorderedLists.forEach(ul => {
-      const items = ul.querySelectorAll('li');
-      const listContent = Array.from(items).map(li => {
-        return `- ${li.textContent.trim()}`;
-      }).join('\n');
-      ul.outerHTML = '\n' + listContent + '\n\n';
-    });
-    
-    // 处理有序列表
-    const orderedLists = container.querySelectorAll('ol');
-    orderedLists.forEach(ol => {
-      const items = ol.querySelectorAll('li');
-      const listContent = Array.from(items).map((li, index) => {
-        return `${index + 1}. ${li.textContent.trim()}`;
-      }).join('\n');
-      ol.outerHTML = '\n' + listContent + '\n\n';
-    });
-    
-    // 处理段落
-    const paragraphs = container.querySelectorAll('p');
-    paragraphs.forEach(p => {
-      if (!p.closest('li')) {
-        p.outerHTML = p.textContent.trim() + '\n\n';
-      }
-    });
-    
-    // 处理表格
-    const tables = container.querySelectorAll('table');
-    tables.forEach(table => {
-      let markdown = '\n';
-      const rows = table.querySelectorAll('tr');
-      
-      rows.forEach((row, rowIndex) => {
-        const cells = row.querySelectorAll('th, td');
-        const cellContent = Array.from(cells).map(cell => cell.textContent.trim()).join(' | ');
-        markdown += `| ${cellContent} |\n`;
-        
-        // 添加表头分隔线
-        if (rowIndex === 0 && row.querySelectorAll('th').length > 0) {
-          const separator = Array.from(cells).map(() => '---').join(' | ');
-          markdown += `| ${separator} |\n`;
-        }
-      });
-      
-      table.outerHTML = markdown + '\n';
-    });
-    
-    // 获取处理后的文本，并清理多余的空行
-    let content = container.textContent
-      .trim()
-      .replace(/\n{3,}/g, '\n\n'); // 将3个或更多换行符替换为2个
-    
-    return content;
   }
-};
+
+  const boldElements = container.querySelectorAll('strong, b');
+  boldElements.forEach(bold => {
+    bold.outerHTML = `**${bold.textContent}**`;
+  });
+
+  const italicElements = container.querySelectorAll('em, i');
+  italicElements.forEach(italic => {
+    italic.outerHTML = `*${italic.textContent}*`;
+  });
+
+  const codeBlocks = container.querySelectorAll('pre');
+  codeBlocks.forEach(pre => {
+    const code = pre.querySelector('code');
+    const language = code?.className?.match(/language-(\w+)/)?.[1] || '';
+    const content = code?.textContent || pre.textContent;
+    pre.outerHTML = `\n\`\`\`${language}\n${content}\n\`\`\`\n\n`;
+  });
+
+  const inlineCodes = container.querySelectorAll('code');
+  inlineCodes.forEach(code => {
+    if (!code.closest('pre')) {
+      code.outerHTML = `\`${code.textContent}\``;
+    }
+  });
+
+  const links = container.querySelectorAll('a');
+  links.forEach(link => {
+    const href = link.getAttribute('href');
+    const text = link.textContent.trim();
+    if (href && text) {
+      link.outerHTML = `[${text}](${href})`;
+    }
+  });
+
+  const unorderedLists = container.querySelectorAll('ul');
+  unorderedLists.forEach(ul => {
+    const items = ul.querySelectorAll('li');
+    const listContent = Array.from(items).map(li => {
+      return `- ${li.textContent.trim()}`;
+    }).join('\n');
+    ul.outerHTML = '\n' + listContent + '\n\n';
+  });
+
+  const orderedLists = container.querySelectorAll('ol');
+  orderedLists.forEach(ol => {
+    const items = ol.querySelectorAll('li');
+    const listContent = Array.from(items).map((li, index) => {
+      return `${index + 1}. ${li.textContent.trim()}`;
+    }).join('\n');
+    ol.outerHTML = '\n' + listContent + '\n\n';
+  });
+
+  const paragraphs = container.querySelectorAll('p');
+  paragraphs.forEach(p => {
+    if (!p.closest('li')) {
+      p.outerHTML = p.textContent.trim() + '\n\n';
+    }
+  });
+
+  const tables = container.querySelectorAll('table');
+  tables.forEach(table => {
+    let markdown = '\n';
+    const rows = table.querySelectorAll('tr');
+
+    rows.forEach((row, rowIndex) => {
+      const cells = row.querySelectorAll('th, td');
+      const cellContent = Array.from(cells).map(cell => cell.textContent.trim()).join(' | ');
+      markdown += `| ${cellContent} |\n`;
+
+      if (rowIndex === 0 && row.querySelectorAll('th').length > 0) {
+        const separator = Array.from(cells).map(() => '---').join(' | ');
+        markdown += `| ${separator} |\n`;
+      }
+    });
+
+    table.outerHTML = markdown + '\n';
+  });
+
+  let content = container.textContent
+    .trim()
+    .replace(/\n{3,}/g, '\n\n');
+
+  return content;
+}
 
 /**
  * ChatGPT Deep Research 提取器
@@ -151,13 +129,13 @@ class ChatGPTDeepResearchExtractor {
     const baseXPath = '//*[@id="thread"]/div/div[1]/div/div/div[2]/article';
     
     // 获取所有article元素
-    const articles = ChatGPTUtils.getAllElementsByXPath(baseXPath);
+    const articles = getAllElementsByXPath(baseXPath);
     const deepResearchContainers = [];
     
          articles.forEach((article, index) => {
        // 检查article下是否有包含"container"的Deep Research内容
        const containerPath = `${baseXPath}[${index + 1}]/div/div/div/div/div[1]/div[3]/div[2]`;
-       const containerElement = ChatGPTUtils.getElementByXPath(containerPath);
+       const containerElement = getElementByXPath(containerPath);
       
       if (containerElement) {
         // 检查是否包含Deep Research相关内容的特征
@@ -207,7 +185,7 @@ class ChatGPTDeepResearchExtractor {
     }
     
     // 提取内容
-    const content = ChatGPTUtils.processDeepResearchContent(container.element);
+    const content = processDeepResearchContent(container.element);
     
     if (!content || content.trim().length < 50) {
       console.warn(`⚠️ Deep Research ${container.articleIndex} 内容过短或为空`);
@@ -230,7 +208,7 @@ class ChatGPTDeepResearchExtractor {
     
     try {
       // 等待页面加载完成
-      await ChatGPTUtils.sleep(1000);
+      await sleep(1000);
       
       // 查找所有Deep Research容器
       const containers = this.findDeepResearchContainers();

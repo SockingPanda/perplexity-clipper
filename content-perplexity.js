@@ -1,131 +1,7 @@
 /**
  * 通用工具函数
+ * 由 utils.js 和 extractor-utils.js 提供
  */
-const Utils = {
-  sleep,
-  waitForElement,
-  getElementByXPath,
-  getAllElementsByXPath,
-  
-  /**
-   * 处理文章描述，确保每段都以 > 开头，但空行不带>符号
-   * @param {string} description - 原始描述文本
-   * @returns {string} - 处理后的描述文本
-   */
-  processDescription(description) {
-    if (!description) return '';
-    
-    // 按段落分割
-    const paragraphs = description.split(/\n{2,}/);
-    
-    // 为每段添加 > 前缀
-    return paragraphs
-      .map(p => p.trim())
-      .filter(p => p) // 过滤空段落
-      .map(p => `> ${p}`)
-      .join('\n\n'); // 段落之间添加空行，不带>符号
-  },
-  
-  processContent(element) {
-    // 创建一个副本以进行处理
-    const container = document.createElement('div');
-    container.innerHTML = element.innerHTML;
-  
-    // 处理所有引用链接
-    const citations = container.querySelectorAll('a.citation');
-    citations.forEach(citation => {
-      const number = citation.querySelector('span span').textContent;
-      const href = citation.getAttribute('href');
-      const title = citation.getAttribute('aria-label');
-      citation.outerHTML = `[${number}](${href} "${title}")`;
-    });
-  
-    // 处理无序列表
-    const unorderedLists = container.querySelectorAll('ul');
-    unorderedLists.forEach(ul => {
-      const items = ul.querySelectorAll('li');
-      const listContent = Array.from(items).map(li => {
-        // 获取段落内容，如果有多个段落，用换行符连接
-        const paragraphs = li.querySelectorAll('p');
-        const content = Array.from(paragraphs)
-          .map(p => p.innerHTML.trim())
-          .join('\n');
-        return `- ${content}`;
-      }).join('\n');
-      ul.outerHTML = '\n' + listContent + '\n';
-    });
-  
-    // 处理有序列表
-    const orderedLists = container.querySelectorAll('ol');
-    orderedLists.forEach(ol => {
-      const items = ol.querySelectorAll('li');
-      const listContent = Array.from(items).map((li, index) => {
-        // 获取段落内容，如果有多个段落，用换行符连接
-        const paragraphs = li.querySelectorAll('p');
-        const content = Array.from(paragraphs)
-          .map(p => p.innerHTML.trim())
-          .join('\n');
-        return `${index + 1}. ${content}`;
-      }).join('\n');
-      ol.outerHTML = '\n' + listContent + '\n';
-    });
-  
-    // 处理段落
-    const paragraphs = container.querySelectorAll('p');
-    paragraphs.forEach(p => {
-      if (!p.closest('li')) { // 如果段落不在列表项内，添加额外的换行
-        p.outerHTML = p.innerHTML + '\n\n';
-      }
-    });
-  
-    // 获取处理后的文本，并清理多余的空行
-    let content = container.textContent
-      .trim()
-      .replace(/\n{3,}/g, '\n\n'); // 将3个或更多换行符替换为2个
-  
-    return content;
-  },
-  
-  /**
-   * 处理图片URL，将Cloudinary代理的URL转换为原始URL
-   * @param {string} url - 图片URL
-   * @returns {string} - 处理后的URL
-   */
-  processImageUrl(url) {
-    if (!url) return url;
-    
-    // 检查是否是Cloudinary代理的URL
-    if (url.includes('pplx-res.cloudinary.com/image/fetch')) {
-      try {
-        // 提取原始URL - 修复正则表达式
-        const regex = /https:\/\/pplx-res\.cloudinary\.com\/image\/fetch\/[^\/]+\/(.+)$/;
-        const match = url.match(regex);
-        
-        if (match && match[1]) {
-          // 解码URL
-          let originalUrl = decodeURIComponent(match[1]);
-          
-          // 处理可能的双重编码
-          if (originalUrl.includes('%')) {
-            originalUrl = decodeURIComponent(originalUrl);
-          }
-          
-          // 如果URL以t_limit/开头，去掉这个前缀
-          if (originalUrl.startsWith('t_limit/')) {
-            originalUrl = originalUrl.substring(8);
-          }
-          
-          console.log('🔄 图片URL已转换:', originalUrl);
-          return originalUrl;
-        }
-      } catch (error) {
-        console.error('处理图片URL时出错:', error);
-      }
-    }
-    
-    return url;
-  }
-};
 
 /**
  * 提取器基类
@@ -168,18 +44,18 @@ class PerplexityPageExtractor extends BaseExtractor {
     
     // 获取标题
     const titleXPath = '//*[@id="__next"]/main/div[1]/div/div[2]/div/div[1]/div[4]/div/div/div[1]/div[2]/div/div[2]/div[1]/div/div[1]/div/div/div/div/div/span';
-    const titleEl = Utils.getElementByXPath(titleXPath);
+    const titleEl = getElementByXPath(titleXPath);
     const mainTitle = titleEl?.textContent?.trim() || 'Untitled';
     console.log('📌 主标题:', mainTitle);
     let md = `# ${mainTitle}\n\n`;
   
     // 获取文章描述
     const descXPath = '//*[@id="__next"]/main/div[1]/div/div[2]/div/div[1]/div[4]/div/div/div[1]/div[2]/div/div[2]/div[1]/div/div[2]';
-    const descEl = Utils.getElementByXPath(descXPath);
+    const descEl = getElementByXPath(descXPath);
     if (descEl) {
       // 先提取内容，再处理为引用格式
-      const rawDescription = Utils.processContent(descEl);
-      const description = Utils.processDescription(rawDescription);
+      const rawDescription = processContent(descEl);
+      const description = processDescription(rawDescription);
       console.log('📝 文章描述:', description ? description.substring(0, 100) + (description.length > 100 ? '...' : '') : '(无描述)');
       if (description) {
         md += `${description}\n\n`;
@@ -188,17 +64,17 @@ class PerplexityPageExtractor extends BaseExtractor {
   
     // 获取大图
     const imgXPath = '//*[@id="__next"]/main/div[1]/div/div[2]/div/div[1]/div[4]/div/div/div[1]/div[2]/div/div[2]/div[2]/div/div/div/div/div/div/div/div[1]/div/div/div/img';
-    const img = Utils.getElementByXPath(imgXPath);
+    const img = getElementByXPath(imgXPath);
     if (img && img.src) {
       // 处理图片URL
-      const processedUrl = Utils.processImageUrl(img.src);
+      const processedUrl = processImageUrl(img.src);
       console.log('🖼 图片URL:', processedUrl);
       md += `![hero image](${processedUrl})\n\n`;
     }
   
     // 获取所有段落
     const baseXPath = '//*[@id="__next"]/main/div[1]/div/div[2]/div/div[1]/div[4]/div/div/div[1]/div[2]/div/div[2]/div';
-    const sections = Utils.getAllElementsByXPath(baseXPath + '[position()>=3]');
+    const sections = getAllElementsByXPath(baseXPath + '[position()>=3]');
     console.log('📑 找到段落数量:', sections.length);
   
     let shouldContinue = true;
@@ -210,7 +86,7 @@ class PerplexityPageExtractor extends BaseExtractor {
   
       // 获取段落标题
       const titleXPath = `//*[@id="__next"]/main/div[1]/div/div[2]/div/div[1]/div[4]/div/div/div[1]/div[2]/div/div[2]/div[${sectionNumber}]/div/div/div[1]/div[1]`;
-      const titleEl = Utils.getElementByXPath(titleXPath);
+        const titleEl = getElementByXPath(titleXPath);
       const title = titleEl?.textContent?.trim() || '';
       
       // 如果标题包含"相关"，则停止提取
@@ -227,9 +103,9 @@ class PerplexityPageExtractor extends BaseExtractor {
   
       // 获取段落正文
       const contentXPath = `//*[@id="__next"]/main/div[1]/div/div[2]/div/div[1]/div[4]/div/div/div[1]/div[2]/div/div[2]/div[${sectionNumber}]/div/div/div[1]/div[2]`;
-      const contentEl = Utils.getElementByXPath(contentXPath);
+        const contentEl = getElementByXPath(contentXPath);
       if (contentEl) {
-        const content = Utils.processContent(contentEl);
+          const content = processContent(contentEl);
         console.log('📝 段落内容:', content ? content.substring(0, 100) + (content.length > 100 ? '...' : '') : '(无内容)');
         if (content) {
           md += `${content}\n\n`;
