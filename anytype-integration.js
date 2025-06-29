@@ -29,6 +29,9 @@ export default class AnytypeIntegration {
     this.typeSelect = document.getElementById('typeSelect');
     this.templateSelect = document.getElementById('templateSelect');
     this.objectTitleInput = document.getElementById('objectTitle');
+    this.objectTitleGroup = document.getElementById('objectTitleGroup');
+    this.objectListGroup = document.getElementById('objectListGroup');
+    this.objectList = document.getElementById('objectList');
     this.confirmExportBtn = document.getElementById('confirmExport');
     this.cancelExportBtn = document.getElementById('cancelExport');
   }
@@ -156,10 +159,22 @@ export default class AnytypeIntegration {
     const spaces = await this.api.getSpaces();
     const prefs = this.preferences[this.contentHandler.currentCategory] || {};
     await this.populateSpaceSelect(spaces, prefs.spaceId, prefs.typeKey, prefs.templateId);
-    const title = this.contentHandler.selectedItemsForBatch.length > 1
-      ? `将创建 ${this.contentHandler.selectedItemsForBatch.length} 个对象`
-      : this.contentHandler.generateDefaultTitle();
-    this.objectTitleInput.value = title;
+    const multiple = this.contentHandler.selectedItemsForBatch.length > 1;
+    if (multiple) {
+      this.objectTitleGroup.classList.add('hidden');
+      this.objectListGroup.classList.remove('hidden');
+      this.objectList.innerHTML = '';
+      this.contentHandler.selectedItemsForBatch.forEach(item => {
+        const li = document.createElement('li');
+        li.textContent = item.title || '未命名';
+        this.objectList.appendChild(li);
+      });
+      this.objectTitleInput.value = `将创建 ${this.contentHandler.selectedItemsForBatch.length} 个对象`;
+    } else {
+      this.objectListGroup.classList.add('hidden');
+      this.objectTitleGroup.classList.remove('hidden');
+      this.objectTitleInput.value = this.contentHandler.generateDefaultTitle();
+    }
     this.showExportModal();
   }
 

@@ -165,6 +165,24 @@
     border-bottom: none;
   }
 
+  .object-list {
+    list-style: none;
+    padding-left: 0;
+    max-height: 120px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+  }
+
+  .object-list li {
+    padding: 4px 8px;
+    border-bottom: 1px solid #eee;
+  }
+
+  .object-list li:last-child {
+    border-bottom: none;
+  }
+
   /* Deep Research 选择界面样式 */
   .selection-header {
     display: flex;
@@ -389,9 +407,13 @@
           <!-- 模板列表将在这里动态生成 -->
         </div>
       </div>
-      <div class="form-group">
+      <div id="objectTitleGroup" class="form-group">
         <label>对象标题</label>
         <input type="text" id="objectTitle" placeholder="输入标题">
+      </div>
+      <div id="objectListGroup" class="form-group hidden">
+        <label>待导出的对象</label>
+        <ul id="objectList" class="object-list"></ul>
       </div>
       <div class="button-group">
         <button id="cancelExport">取消</button>
