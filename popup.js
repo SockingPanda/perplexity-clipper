@@ -10,6 +10,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   await anytype.toggleAnytypeFeature();
   content.updateExtractButtonText();
 
+  // show overlay if page not supported
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const overlay = document.getElementById('unsupportedOverlay');
+    const closeBtn = document.getElementById('closeUnsupported');
+    closeBtn.addEventListener('click', () => overlay.classList.add('hidden'));
+    if (!content.isValidUrl(tab.url || '', content.currentCategory)) {
+      overlay.classList.remove('hidden');
+    }
+  } catch (_) {
+    // ignore errors
+  }
+
   // main actions
   content.extractBtn.addEventListener('click', () => content.extractContent());
   content.categorySelect.addEventListener('change', () => content.onCategoryChange());
