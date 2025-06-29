@@ -1,5 +1,6 @@
 import ContentHandler from './content-handler.js';
 import AnytypeIntegration from './anytype-integration.js';
+import { SUPPORTED_CATEGORIES } from './supported-categories.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   const content = new ContentHandler();
@@ -9,6 +10,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   await content.autoSetCategoryFromCurrentTab();
   await anytype.toggleAnytypeFeature();
   content.updateExtractButtonText();
+  const unsupportedMsg = `请在 ${SUPPORTED_CATEGORIES.map(c => c.name).join(' 或 ')} 页面使用此扩展。`;
+  document.getElementById('unsupportedMessage').textContent = unsupportedMsg;
 
   // show overlay if page not supported
   try {

@@ -1,12 +1,15 @@
+import { SUPPORTED_CATEGORIES } from './supported-categories.js';
+
 export default class ContentHandler {
   constructor() {
     this.currentMarkdown = '';
-    this.currentCategory = 'perplexity';
+    this.currentCategory = SUPPORTED_CATEGORIES[0].key;
     this.extractedItems = [];
     this.pageInfo = null;
     this.isMultiSelectMode = false;
     this.selectedItemsForBatch = [];
     this._initElements();
+    this._populateCategoryOptions();
   }
 
   _initElements() {
@@ -23,6 +26,16 @@ export default class ContentHandler {
     this.modeIndicator = document.getElementById('modeIndicator');
   }
 
+  _populateCategoryOptions() {
+    this.categorySelect.innerHTML = '';
+    SUPPORTED_CATEGORIES.forEach(c => {
+      const option = document.createElement('option');
+      option.value = c.key;
+      option.textContent = c.name;
+      this.categorySelect.appendChild(option);
+    });
+  }
+
   setAnytypeManager(manager) {
     this.anytype = manager;
   }
@@ -33,35 +46,18 @@ export default class ContentHandler {
   }
 
   updateExtractButtonText() {
-    const texts = {
-      perplexity: '抽取并复制 Markdown',
-      chatgpt: '提取 Deep Research 内容'
-    };
-    this.extractBtn.textContent = texts[this.currentCategory] || texts.perplexity;
-  }
-
-  isPerplexityUrl(url) {
-    return (
-      url.includes('perplexity.ai/page/') ||
-      (url.includes('perplexity.ai/discover/') &&
-       /perplexity\.ai\/discover\/[^/]+\/[^/]+/.test(url))
-    );
-  }
-
-  isChatGPTUrl(url) {
-    return url.includes('chatgpt.com/c/');
+    const cat = SUPPORTED_CATEGORIES.find(c => c.key === this.currentCategory);
+    this.extractBtn.textContent = cat ? cat.buttonText : '抽取';
   }
 
   isValidUrl(url, category) {
-    if (category === 'perplexity') return this.isPerplexityUrl(url);
-    if (category === 'chatgpt') return this.isChatGPTUrl(url);
-    return false;
+    const cat = SUPPORTED_CATEGORIES.find(c => c.key === category);
+    return cat ? cat.isValidUrl(url) : false;
   }
 
   determineCategory(url) {
-    if (this.isChatGPTUrl(url)) return 'chatgpt';
-    if (this.isPerplexityUrl(url)) return 'perplexity';
-    return 'perplexity';
+    const cat = SUPPORTED_CATEGORIES.find(c => c.isValidUrl(url));
+    return cat ? cat.key : SUPPORTED_CATEGORIES[0].key;
   }
 
   async autoSetCategoryFromCurrentTab() {
@@ -77,19 +73,16 @@ export default class ContentHandler {
   }
 
   getInvalidUrlMessage(category) {
-    return category === 'chatgpt'
-      ? '❌ 请在 ChatGPT 会话页面使用此扩展'
-      : '❌ 请在 Perplexity 文章页面使用此扩展';
+    const cat = SUPPORTED_CATEGORIES.find(c => c.key === category);
+    if (!cat) return '❌ 当前页面不受支持';
+    return `❌ 请在 ${cat.name} 页面使用此扩展`;
   }
 
   async extractContent() {
     try {
       this.extractBtn.disabled = true;
-      const loading = {
-        perplexity: '提取中...',
-        chatgpt: '分析Deep Research中...'
-      };
-      this.extractBtn.textContent = loading[this.currentCategory] || '提取中...';
+      const cat = SUPPORTED_CATEGORIES.find(c => c.key === this.currentCategory);
+      this.extractBtn.textContent = (cat && cat.loadingText) || '提取中...';
 
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       if (!this.isValidUrl(tab.url, this.currentCategory)) {

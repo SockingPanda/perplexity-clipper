@@ -336,10 +336,7 @@
 
   <!-- 主功能区域 -->
   <label>抽取类别
-    <select id="category">
-      <option value="perplexity">Perplexity 文章</option>
-      <option value="chatgpt">ChatGPT Deep Research</option>
-    </select>
+    <select id="category"></select>
   </label>
   
   <button id="extract">抽取并复制 Markdown</button>
@@ -426,7 +423,7 @@
   <div id="unsupportedOverlay" class="modal hidden">
     <div class="modal-content">
       <h3>当前页面不受支持</h3>
-      <p>请在 Perplexity 文章或 ChatGPT 会话页面使用此扩展。</p>
+      <p id="unsupportedMessage">请在 Perplexity 文章或 ChatGPT 会话页面使用此扩展。</p>
       <button id="closeUnsupported">知道了</button>
     </div>
   </div>

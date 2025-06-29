@@ -47,7 +47,7 @@ export default class AnytypeIntegration {
   async loadSettings() {
     const result = await chrome.storage.local.get(['enableAnytype', 'preferences']);
     this.enableAnytypeCheckbox.checked = result.enableAnytype || false;
-    this.preferences = result.preferences || { perplexity: {}, chatgpt: {} };
+    this.preferences = result.preferences || {};
   }
 
   async saveSettings() {
@@ -255,7 +255,7 @@ export default class AnytypeIntegration {
       const spaceId = this.spaceSelect.value;
       const typeKey = this.typeSelect.value;
       const templateId = this.templateSelect.value;
-      const key = this.contentHandler.currentCategory || 'perplexity';
+      const key = this.getModuleKey();
       this.preferences[key] = { spaceId, typeKey, templateId };
       await this.saveSettings();
       const items = this.contentHandler.selectedItemsForBatch;
