@@ -73,7 +73,18 @@ export default class AnytypeIntegration {
   async startExportFlow() {
     try {
       this.exportAnytypeBtn.disabled = true;
-      if (!this.contentHandler.currentMarkdown && this.contentHandler.selectedItemsForBatch.length === 0) {
+      if (!this.contentHandler.currentMarkdown) {
+        if (this.contentHandler.extractedItems.length === 0) {
+          // 未执行过提取，先自动提取
+          await this.contentHandler.extractContent();
+        }
+        // 如果仍然没有Markdown且处于多选模式，则尝试根据用户选择生成
+        if (!this.contentHandler.currentMarkdown && this.contentHandler.extractedItems.length > 0) {
+          await this.contentHandler.generateSelectedMarkdown();
+        }
+      }
+
+      if (!this.contentHandler.currentMarkdown) {
         alert('❌ 请先提取或选择内容');
         return;
       }
@@ -147,6 +158,7 @@ export default class AnytypeIntegration {
   }
 
   async onSpaceChange() {
+    this.selectedSpaceId = this.spaceSelect.value;
     const types = await this.api.getObjectTypes(this.selectedSpaceId);
     await this.populateTypeSelect(types);
   }
@@ -164,8 +176,13 @@ export default class AnytypeIntegration {
   }
 
   async onTypeChange() {
+    this.selectedTypeKey = this.typeSelect.value;
     const templates = await this.api.getTemplates(this.selectedSpaceId, this.selectedTypeKey);
     this.populateTemplateSelect(templates);
+  }
+
+  onTemplateChange() {
+    this.selectedTemplateId = this.templateSelect.value;
   }
 
   populateTemplateSelect(templates) {
@@ -192,11 +209,24 @@ export default class AnytypeIntegration {
       const spaceId = this.spaceSelect.value;
       const typeKey = this.typeSelect.value;
       const templateId = this.templateSelect.value;
-      const body = this.contentHandler.currentMarkdown;
-      const title = this.objectTitleInput.value.trim();
-      const obj = { name: title, type_key: typeKey, body };
-      if (templateId) obj.template_id = templateId;
-      await this.api.createObject(spaceId, obj);
+      const items = this.contentHandler.selectedItemsForBatch;
+      if (items.length > 1) {
+        for (const item of items) {
+          const obj = {
+            name: item.title || this.objectTitleInput.value.trim(),
+            type_key: typeKey,
+            body: item.content
+          };
+          if (templateId) obj.template_id = templateId;
+          await this.api.createObject(spaceId, obj);
+        }
+      } else {
+        const body = this.contentHandler.currentMarkdown;
+        const title = this.objectTitleInput.value.trim();
+        const obj = { name: title, type_key: typeKey, body };
+        if (templateId) obj.template_id = templateId;
+        await this.api.createObject(spaceId, obj);
+      }
       this.closeExportModal();
       alert('✅ 导出成功！对象已创建到 Anytype');
     } catch (e) {

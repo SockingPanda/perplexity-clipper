@@ -130,11 +130,13 @@ export default class ContentHandler {
       this.modeIndicator.textContent = '多选模式 - 选择后直接点击导出按钮';
       this.selectAllBtn.classList.remove('hidden');
       this.selectNoneBtn.classList.remove('hidden');
+      this.generateSelectedBtn.classList.remove('hidden');
     } else {
       this.selectionTitle.textContent = '选择要复制的 Deep Research 内容';
       this.modeIndicator.textContent = '单选模式 - 点击项目自动复制';
       this.selectAllBtn.classList.add('hidden');
       this.selectNoneBtn.classList.add('hidden');
+      this.generateSelectedBtn.classList.add('hidden');
     }
   }
 
