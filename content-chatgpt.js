@@ -126,7 +126,7 @@ class ChatGPTDeepResearchExtractor {
    */
   findDeepResearchContainers() {
     // 基于提供的XPath模式，查找所有包含"container"标识的Deep Research元素
-    const baseXPath = '//*[@id="thread"]/div/div[1]/div/div/div[2]/article';
+    const baseXPath = SELECTORS.CHATGPT.DEEP_RESEARCH_ARTICLE_XPATH;
     
     // 获取所有article元素
     const articles = getAllElementsByXPath(baseXPath);
@@ -134,7 +134,7 @@ class ChatGPTDeepResearchExtractor {
     
          articles.forEach((article, index) => {
        // 检查article下是否有包含"container"的Deep Research内容
-       const containerPath = `${baseXPath}[${index + 1}]/div/div/div/div/div[1]/div[3]/div[2]`;
+       const containerPath = SELECTORS.CHATGPT.deepResearchContainer(index + 1);
        const containerElement = getElementByXPath(containerPath);
       
       if (containerElement) {
@@ -166,11 +166,7 @@ class ChatGPTDeepResearchExtractor {
     
     // 尝试获取标题
     let title = '';
-    const titleSelectors = [
-      'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-      '[data-message-role="assistant"] > div:first-child',
-      '.font-semibold', '.text-lg', '.text-xl'
-    ];
+    const titleSelectors = SELECTORS.CHATGPT.TITLE_SELECTORS;
     
     for (const selector of titleSelectors) {
       const titleEl = container.element.querySelector(selector);

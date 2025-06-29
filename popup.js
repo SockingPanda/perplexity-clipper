@@ -3,8 +3,11 @@
  * 支持提取 Markdown 并导出到 Anytype
  */
 
+import AnytypeAPI from './anytype-api.js';
+
 class PerplexityClipper {
-  constructor() {
+  constructor(anytypeAPI) {
+    this.anytypeAPI = anytypeAPI;
     this.currentMarkdown = '';
     this.currentChallengeId = null;
     this.selectedSpaceId = null;
@@ -451,7 +454,7 @@ class PerplexityClipper {
   async startPairingFlow() {
     try {
       this.updateAnytypeStatus('info', '正在连接 Anytype...');
-      this.currentChallengeId = await window.anytypeAPI.startPairing();
+      this.currentChallengeId = await this.anytypeAPI.startPairing();
       this.showPairingModal();
     } catch (error) {
       console.error('启动配对失败:', error);
@@ -498,7 +501,7 @@ class PerplexityClipper {
       this.confirmPairingBtn.disabled = true;
       this.confirmPairingBtn.textContent = '验证中...';
 
-      await window.anytypeAPI.completePairing(this.currentChallengeId, code);
+      await this.anytypeAPI.completePairing(this.currentChallengeId, code);
       
       this.closePairingModal();
       this.updateAnytypeStatus('success', '✅ 配对成功！');
@@ -521,7 +524,7 @@ class PerplexityClipper {
   async showExportOptions() {
     try {
       // 获取空间列表
-      const spaces = await window.anytypeAPI.getSpaces();
+      const spaces = await this.anytypeAPI.getSpaces();
       await this.populateSpaceSelect(spaces);
       
       // 根据是否是批量导出决定标题处理方式
@@ -601,7 +604,7 @@ class PerplexityClipper {
     this.selectedSpaceId = spaceId;
     
     try {
-      const types = await window.anytypeAPI.getObjectTypes(spaceId);
+      const types = await this.anytypeAPI.getObjectTypes(spaceId);
       await this.populateTypeSelect(types);
       
       // 保存用户偏好
@@ -680,7 +683,7 @@ class PerplexityClipper {
     
     try {
       // 获取模板列表
-      const templates = await window.anytypeAPI.getTemplates(this.selectedSpaceId, typeId);
+      const templates = await this.anytypeAPI.getTemplates(this.selectedSpaceId, typeId);
       this.populateTemplateSelect(templates);
       
       // 保存用户偏好
@@ -1140,7 +1143,7 @@ class PerplexityClipper {
             }
             
             // 创建对象
-            const result = await window.anytypeAPI.createObject(spaceId, objectData);
+            const result = await this.anytypeAPI.createObject(spaceId, objectData);
             results.push({ success: true, title: item.title, result });
             successCount++;
             
@@ -1195,7 +1198,7 @@ class PerplexityClipper {
         }
         
         // 创建对象
-        const result = await window.anytypeAPI.createObject(spaceId, objectData);
+        const result = await this.anytypeAPI.createObject(spaceId, objectData);
         
         this.closeExportModal();
         alert('✅ 导出成功！对象已创建到 Anytype');
@@ -1218,5 +1221,6 @@ class PerplexityClipper {
 
 // 初始化应用
 document.addEventListener('DOMContentLoaded', () => {
-  new PerplexityClipper();
+  const api = new AnytypeAPI();
+  new PerplexityClipper(api);
 });

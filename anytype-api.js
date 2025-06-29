@@ -3,7 +3,7 @@
  * 处理与 Anytype 本地 API 的所有交互
  */
 
-class AnytypeAPI {
+export class AnytypeAPI {
   constructor() {
     this.baseURL = 'http://localhost:31009/v1';
     this.apiVersion = '2025-05-20';
@@ -519,6 +519,5 @@ class AnytypeAPI {
   }
 }
 
-// 创建全局实例
-console.log('🌟 创建 AnytypeAPI 全局实例...');
-window.anytypeAPI = new AnytypeAPI(); 
+// 使用 ES 模块导出，外部可自行实例化
+export default AnytypeAPI;

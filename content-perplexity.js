@@ -43,15 +43,13 @@ class PerplexityPageExtractor extends BaseExtractor {
     console.log('使用 PerplexityPage 提取器');
     
     // 获取标题
-    const titleXPath = '//*[@id="__next"]/main/div[1]/div/div[2]/div/div[1]/div[4]/div/div/div[1]/div[2]/div/div[2]/div[1]/div/div[1]/div/div/div/div/div/span';
-    const titleEl = getElementByXPath(titleXPath);
+    const titleEl = getElementByXPath(SELECTORS.PERPLEXITY.PAGE_TITLE_XPATH);
     const mainTitle = titleEl?.textContent?.trim() || 'Untitled';
     console.log('📌 主标题:', mainTitle);
     let md = `# ${mainTitle}\n\n`;
   
     // 获取文章描述
-    const descXPath = '//*[@id="__next"]/main/div[1]/div/div[2]/div/div[1]/div[4]/div/div/div[1]/div[2]/div/div[2]/div[1]/div/div[2]';
-    const descEl = getElementByXPath(descXPath);
+    const descEl = getElementByXPath(SELECTORS.PERPLEXITY.DESCRIPTION_XPATH);
     if (descEl) {
       // 先提取内容，再处理为引用格式
       const rawDescription = processContent(descEl);
@@ -63,8 +61,7 @@ class PerplexityPageExtractor extends BaseExtractor {
     }
   
     // 获取大图
-    const imgXPath = '//*[@id="__next"]/main/div[1]/div/div[2]/div/div[1]/div[4]/div/div/div[1]/div[2]/div/div[2]/div[2]/div/div/div/div/div/div/div/div[1]/div/div/div/img';
-    const img = getElementByXPath(imgXPath);
+    const img = getElementByXPath(SELECTORS.PERPLEXITY.HERO_IMAGE_XPATH);
     if (img && img.src) {
       // 处理图片URL
       const processedUrl = processImageUrl(img.src);
@@ -73,7 +70,7 @@ class PerplexityPageExtractor extends BaseExtractor {
     }
   
     // 获取所有段落
-    const baseXPath = '//*[@id="__next"]/main/div[1]/div/div[2]/div/div[1]/div[4]/div/div/div[1]/div[2]/div/div[2]/div';
+    const baseXPath = SELECTORS.PERPLEXITY.SECTION_BASE_XPATH;
     const sections = getAllElementsByXPath(baseXPath + '[position()>=3]');
     console.log('📑 找到段落数量:', sections.length);
   
@@ -85,8 +82,7 @@ class PerplexityPageExtractor extends BaseExtractor {
       const sectionNumber = index + 3; // 因为从div[3]开始
   
       // 获取段落标题
-      const titleXPath = `//*[@id="__next"]/main/div[1]/div/div[2]/div/div[1]/div[4]/div/div/div[1]/div[2]/div/div[2]/div[${sectionNumber}]/div/div/div[1]/div[1]`;
-        const titleEl = getElementByXPath(titleXPath);
+      const titleEl = getElementByXPath(SELECTORS.PERPLEXITY.sectionTitle(sectionNumber));
       const title = titleEl?.textContent?.trim() || '';
       
       // 如果标题包含"相关"，则停止提取
@@ -102,8 +98,7 @@ class PerplexityPageExtractor extends BaseExtractor {
       }
   
       // 获取段落正文
-      const contentXPath = `//*[@id="__next"]/main/div[1]/div/div[2]/div/div[1]/div[4]/div/div/div[1]/div[2]/div/div[2]/div[${sectionNumber}]/div/div/div[1]/div[2]`;
-        const contentEl = getElementByXPath(contentXPath);
+      const contentEl = getElementByXPath(SELECTORS.PERPLEXITY.sectionContent(sectionNumber));
       if (contentEl) {
           const content = processContent(contentEl);
         console.log('📝 段落内容:', content ? content.substring(0, 100) + (content.length > 100 ? '...' : '') : '(无内容)');
