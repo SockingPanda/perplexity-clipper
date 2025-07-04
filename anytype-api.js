@@ -517,6 +517,165 @@ export class AnytypeAPI {
     await this.saveApiKey(null);
     console.log('✅ 配对信息已清除');
   }
+
+  /**
+   * 获取指定空间的属性列表
+   */
+  async listProperties(spaceId) {
+    console.log('🏷️ 获取属性列表...', spaceId);
+    
+    try {
+      const apiKey = await this.getApiKey();
+      if (!apiKey) {
+        throw new Error('未找到 API Key，请先完成配对');
+      }
+
+      const url = `${this.baseURL}/spaces/${spaceId}/properties`;
+      console.log('📡 属性列表 URL:', url);
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          ...(await this.getHeaders()),
+          'Authorization': `Bearer ${apiKey}`
+        }
+      });
+
+      console.log('🌐 属性列表响应状态:', response.status);
+      console.log('✅ 属性列表响应 OK:', response.ok);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ 获取属性列表失败:', errorText);
+        throw new Error(`获取属性列表失败: ${response.status} - ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log('📋 属性列表完整数据:', data);
+      
+      // 从data字段中提取属性列表
+      const properties = data.data || [];
+      console.log('🏷️ 提取的属性列表:', properties);
+      
+      return properties;
+    } catch (error) {
+      console.error('❌ 获取属性列表失败:', error);
+      console.error('🔍 属性列表错误详情:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * 获取指定属性的标签列表
+   */
+  async listTags(spaceId, propertyId) {
+    console.log('🏷️ 获取标签列表...', spaceId, propertyId);
+    
+    try {
+      const apiKey = await this.getApiKey();
+      if (!apiKey) {
+        throw new Error('未找到 API Key，请先完成配对');
+      }
+
+      const url = `${this.baseURL}/spaces/${spaceId}/properties/${propertyId}/tags`;
+      console.log('📡 标签列表 URL:', url);
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          ...(await this.getHeaders()),
+          'Authorization': `Bearer ${apiKey}`
+        }
+      });
+
+      console.log('🌐 标签列表响应状态:', response.status);
+      console.log('✅ 标签列表响应 OK:', response.ok);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ 获取标签列表失败:', errorText);
+        throw new Error(`获取标签列表失败: ${response.status} - ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log('📋 标签列表完整数据:', data);
+      
+      // 从data字段中提取标签列表
+      const tags = data.data || [];
+      console.log('🏷️ 提取的标签列表:', tags);
+      
+      return tags;
+    } catch (error) {
+      console.error('❌ 获取标签列表失败:', error);
+      console.error('🔍 标签列表错误详情:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * 创建新标签
+   */
+  async createTag(spaceId, propertyId, tagData) {
+    console.log('🏷️ 创建新标签...', spaceId, propertyId, tagData);
+    
+    try {
+      const apiKey = await this.getApiKey();
+      if (!apiKey) {
+        throw new Error('未找到 API Key，请先完成配对');
+      }
+
+      const url = `${this.baseURL}/spaces/${spaceId}/properties/${propertyId}/tags`;
+      console.log('📡 创建标签 URL:', url);
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          ...(await this.getHeaders()),
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify(tagData)
+      });
+
+      console.log('🌐 创建标签响应状态:', response.status);
+      console.log('✅ 创建标签响应 OK:', response.ok);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ 创建标签失败:', errorText);
+        
+        let errorData = {};
+        try {
+          errorData = JSON.parse(errorText);
+        } catch (e) {
+          console.warn('⚠️ 无法解析创建标签错误响应为 JSON');
+        }
+        
+        throw new Error(errorData.message || `创建标签失败: ${response.status} - ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log('📋 创建标签完整响应:', data);
+      console.log('✅ 标签创建成功！');
+      
+      return data;
+    } catch (error) {
+      console.error('❌ 创建标签失败:', error);
+      console.error('🔍 创建标签错误详情:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+      throw error;
+    }
+  }
 }
 
 // 使用 ES 模块导出，外部可自行实例化

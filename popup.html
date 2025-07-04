@@ -321,6 +321,104 @@
   .selection-actions button {
     flex: 1;
   }
+
+  /* 标签选择相关样式 */
+  .tag-list {
+    max-height: 150px;
+    overflow-y: auto;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    background: #fff;
+  }
+
+  .tag-item {
+    padding: 8px 12px;
+    border-bottom: 1px solid #f1f3f4;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+
+  .tag-item:hover {
+    background-color: #f8f9fa;
+  }
+
+  .tag-item:last-child {
+    border-bottom: none;
+  }
+
+  .tag-item input[type="checkbox"] {
+    margin: 0;
+    width: auto;
+    cursor: pointer;
+  }
+
+  .tag-name {
+    flex: 1;
+    font-size: 13px;
+    color: #212529;
+    font-weight: 500;
+  }
+
+  .tag-color-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 1px solid #ddd;
+  }
+
+  .add-tag-item {
+    padding: 8px 12px;
+    border-bottom: 1px solid #f1f3f4;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    color: #1976d2;
+    font-style: italic;
+  }
+
+  .add-tag-item:hover {
+    background-color: #f8f9fa;
+  }
+
+  .add-tag-input-container {
+    padding: 8px 12px;
+    border-bottom: 1px solid #f1f3f4;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .add-tag-input {
+    flex: 1;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 13px;
+    outline: none;
+  }
+
+  .add-tag-input:focus {
+    border-color: #1976d2;
+  }
+
+  .add-tag-confirm {
+    background: #1976d2;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+
+  .add-tag-confirm:hover {
+    background: #1565c0;
+  }
 </style>
 <body>
   <!-- 设置区域 -->
@@ -402,6 +500,12 @@
         </select>
         <div id="templateList" class="template-list hidden">
           <!-- 模板列表将在这里动态生成 -->
+        </div>
+      </div>
+      <div id="tagGroup" class="form-group">
+        <label>选择标签 (可选)</label>
+        <div id="tagList" class="tag-list">
+          <!-- 标签列表将在这里动态生成 -->
         </div>
       </div>
       <div id="objectTitleGroup" class="form-group">
