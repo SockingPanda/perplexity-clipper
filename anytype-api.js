@@ -70,6 +70,30 @@ export class AnytypeAPI {
   }
 
   /**
+   * 带认证的 fetch 封装
+   */
+  async fetchWithAuth(url, options = {}) {
+    const headers = await this.getHeaders();
+    options.headers = { ...(options.headers || {}), ...headers };
+
+    const response = await fetch(url, options);
+
+    if (response.status === 401) {
+      await this.saveApiKey(null);
+      const err = new Error('unauthorized');
+      err.code = 'unauthorized';
+      throw err;
+    }
+
+    if (!response.ok) {
+      const message = await response.text();
+      throw new Error(message || `请求失败: ${response.status}`);
+    }
+
+    return response;
+  }
+
+  /**
    * 检查 Anytype 是否在运行
    */
   async checkAnytypeRunning() {
@@ -230,40 +254,18 @@ export class AnytypeAPI {
    */
   async getSpaces() {
     console.log('📂 获取空间列表...');
-    
     try {
-      const apiKey = await this.getApiKey();
-      if (!apiKey) {
-        throw new Error('未找到 API Key，请先完成配对');
-      }
-
       const url = `${this.baseURL}/spaces`;
       console.log('📡 空间列表 URL:', url);
 
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          ...(await this.getHeaders()),
-          'Authorization': `Bearer ${apiKey}`
-        }
-      });
-
-      console.log('🌐 空间列表响应状态:', response.status);
-      console.log('✅ 空间列表响应 OK:', response.ok);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ 获取空间列表失败:', errorText);
-        throw new Error(`获取空间列表失败: ${response.status} - ${errorText}`);
-      }
+      const response = await this.fetchWithAuth(url, { method: 'GET' });
 
       const data = await response.json();
       console.log('📋 空间列表完整数据:', data);
-      
-      // 修正：从data字段中提取空间列表
+
       const spaces = data.data || [];
       console.log('📂 提取的空间列表:', spaces);
-      
+
       return spaces;
     } catch (error) {
       console.error('❌ 获取空间列表失败:', error);
@@ -281,40 +283,18 @@ export class AnytypeAPI {
    */
   async getObjectTypes(spaceId) {
     console.log('🏷️ 获取对象类型列表...', spaceId);
-    
     try {
-      const apiKey = await this.getApiKey();
-      if (!apiKey) {
-        throw new Error('未找到 API Key，请先完成配对');
-      }
-
       const url = `${this.baseURL}/spaces/${spaceId}/types`;
       console.log('📡 对象类型 URL:', url);
 
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          ...(await this.getHeaders()),
-          'Authorization': `Bearer ${apiKey}`
-        }
-      });
-
-      console.log('🌐 对象类型响应状态:', response.status);
-      console.log('✅ 对象类型响应 OK:', response.ok);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ 获取对象类型失败:', errorText);
-        throw new Error(`获取对象类型失败: ${response.status} - ${errorText}`);
-      }
+      const response = await this.fetchWithAuth(url, { method: 'GET' });
 
       const data = await response.json();
       console.log('📋 对象类型完整数据:', data);
-      
-      // 修正：从data字段中提取类型列表
+
       const types = data.data || [];
       console.log('🏷️ 提取的对象类型:', types);
-      
+
       return types;
     } catch (error) {
       console.error('❌ 获取对象类型失败:', error);
@@ -332,40 +312,18 @@ export class AnytypeAPI {
    */
   async getTemplates(spaceId, typeId) {
     console.log('📑 获取模板列表...', spaceId, typeId);
-    
     try {
-      const apiKey = await this.getApiKey();
-      if (!apiKey) {
-        throw new Error('未找到 API Key，请先完成配对');
-      }
-
       const url = `${this.baseURL}/spaces/${spaceId}/types/${typeId}/templates`;
       console.log('📡 模板列表 URL:', url);
 
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          ...(await this.getHeaders()),
-          'Authorization': `Bearer ${apiKey}`
-        }
-      });
-
-      console.log('🌐 模板列表响应状态:', response.status);
-      console.log('✅ 模板列表响应 OK:', response.ok);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ 获取模板列表失败:', errorText);
-        throw new Error(`获取模板列表失败: ${response.status} - ${errorText}`);
-      }
+      const response = await this.fetchWithAuth(url, { method: 'GET' });
 
       const data = await response.json();
       console.log('📋 模板列表完整数据:', data);
-      
-      // 从data字段中提取模板列表
+
       const templates = data.data || [];
       console.log('📑 提取的模板列表:', templates);
-      
+
       return templates;
     } catch (error) {
       console.error('❌ 获取模板列表失败:', error);
@@ -383,32 +341,11 @@ export class AnytypeAPI {
    */
   async getTemplate(spaceId, typeId, templateId) {
     console.log('📄 获取模板详情...', spaceId, typeId, templateId);
-    
     try {
-      const apiKey = await this.getApiKey();
-      if (!apiKey) {
-        throw new Error('未找到 API Key，请先完成配对');
-      }
-
       const url = `${this.baseURL}/spaces/${spaceId}/types/${typeId}/templates/${templateId}`;
       console.log('📡 模板详情 URL:', url);
 
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          ...(await this.getHeaders()),
-          'Authorization': `Bearer ${apiKey}`
-        }
-      });
-
-      console.log('🌐 模板详情响应状态:', response.status);
-      console.log('✅ 模板详情响应 OK:', response.ok);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ 获取模板详情失败:', errorText);
-        throw new Error(`获取模板详情失败: ${response.status} - ${errorText}`);
-      }
+      const response = await this.fetchWithAuth(url, { method: 'GET' });
 
       const data = await response.json();
       console.log('📋 模板详情完整数据:', data);
@@ -430,46 +367,19 @@ export class AnytypeAPI {
   async createObject(spaceId, objectData) {
     console.log('📝 创建新对象...', spaceId);
     console.log('📤 对象数据:', objectData);
-    
     try {
-      const apiKey = await this.getApiKey();
-      if (!apiKey) {
-        throw new Error('未找到 API Key，请先完成配对');
-      }
-
       const url = `${this.baseURL}/spaces/${spaceId}/objects`;
       console.log('📡 创建对象 URL:', url);
 
-      const response = await fetch(url, {
+      const response = await this.fetchWithAuth(url, {
         method: 'POST',
-        headers: {
-          ...(await this.getHeaders()),
-          'Authorization': `Bearer ${apiKey}`
-        },
         body: JSON.stringify(objectData)
       });
-
-      console.log('🌐 创建对象响应状态:', response.status);
-      console.log('✅ 创建对象响应 OK:', response.ok);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ 创建对象失败:', errorText);
-        
-        let errorData = {};
-        try {
-          errorData = JSON.parse(errorText);
-        } catch (e) {
-          console.warn('⚠️ 无法解析创建对象错误响应为 JSON');
-        }
-        
-        throw new Error(errorData.message || `创建对象失败: ${response.status} - ${errorText}`);
-      }
 
       const data = await response.json();
       console.log('📋 创建对象完整响应:', data);
       console.log('✅ 对象创建成功！');
-      
+
       return data;
     } catch (error) {
       console.error('❌ 创建对象失败:', error);
@@ -523,40 +433,18 @@ export class AnytypeAPI {
    */
   async listProperties(spaceId) {
     console.log('🏷️ 获取属性列表...', spaceId);
-    
     try {
-      const apiKey = await this.getApiKey();
-      if (!apiKey) {
-        throw new Error('未找到 API Key，请先完成配对');
-      }
-
       const url = `${this.baseURL}/spaces/${spaceId}/properties`;
       console.log('📡 属性列表 URL:', url);
 
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          ...(await this.getHeaders()),
-          'Authorization': `Bearer ${apiKey}`
-        }
-      });
-
-      console.log('🌐 属性列表响应状态:', response.status);
-      console.log('✅ 属性列表响应 OK:', response.ok);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ 获取属性列表失败:', errorText);
-        throw new Error(`获取属性列表失败: ${response.status} - ${errorText}`);
-      }
+      const response = await this.fetchWithAuth(url, { method: 'GET' });
 
       const data = await response.json();
       console.log('📋 属性列表完整数据:', data);
-      
-      // 从data字段中提取属性列表
+
       const properties = data.data || [];
       console.log('🏷️ 提取的属性列表:', properties);
-      
+
       return properties;
     } catch (error) {
       console.error('❌ 获取属性列表失败:', error);
@@ -574,40 +462,18 @@ export class AnytypeAPI {
    */
   async listTags(spaceId, propertyId) {
     console.log('🏷️ 获取标签列表...', spaceId, propertyId);
-    
     try {
-      const apiKey = await this.getApiKey();
-      if (!apiKey) {
-        throw new Error('未找到 API Key，请先完成配对');
-      }
-
       const url = `${this.baseURL}/spaces/${spaceId}/properties/${propertyId}/tags`;
       console.log('📡 标签列表 URL:', url);
 
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          ...(await this.getHeaders()),
-          'Authorization': `Bearer ${apiKey}`
-        }
-      });
-
-      console.log('🌐 标签列表响应状态:', response.status);
-      console.log('✅ 标签列表响应 OK:', response.ok);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ 获取标签列表失败:', errorText);
-        throw new Error(`获取标签列表失败: ${response.status} - ${errorText}`);
-      }
+      const response = await this.fetchWithAuth(url, { method: 'GET' });
 
       const data = await response.json();
       console.log('📋 标签列表完整数据:', data);
-      
-      // 从data字段中提取标签列表
+
       const tags = data.data || [];
       console.log('🏷️ 提取的标签列表:', tags);
-      
+
       return tags;
     } catch (error) {
       console.error('❌ 获取标签列表失败:', error);
@@ -625,46 +491,19 @@ export class AnytypeAPI {
    */
   async createTag(spaceId, propertyId, tagData) {
     console.log('🏷️ 创建新标签...', spaceId, propertyId, tagData);
-    
     try {
-      const apiKey = await this.getApiKey();
-      if (!apiKey) {
-        throw new Error('未找到 API Key，请先完成配对');
-      }
-
       const url = `${this.baseURL}/spaces/${spaceId}/properties/${propertyId}/tags`;
       console.log('📡 创建标签 URL:', url);
 
-      const response = await fetch(url, {
+      const response = await this.fetchWithAuth(url, {
         method: 'POST',
-        headers: {
-          ...(await this.getHeaders()),
-          'Authorization': `Bearer ${apiKey}`
-        },
         body: JSON.stringify(tagData)
       });
-
-      console.log('🌐 创建标签响应状态:', response.status);
-      console.log('✅ 创建标签响应 OK:', response.ok);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ 创建标签失败:', errorText);
-        
-        let errorData = {};
-        try {
-          errorData = JSON.parse(errorText);
-        } catch (e) {
-          console.warn('⚠️ 无法解析创建标签错误响应为 JSON');
-        }
-        
-        throw new Error(errorData.message || `创建标签失败: ${response.status} - ${errorText}`);
-      }
 
       const data = await response.json();
       console.log('📋 创建标签完整响应:', data);
       console.log('✅ 标签创建成功！');
-      
+
       return data;
     } catch (error) {
       console.error('❌ 创建标签失败:', error);

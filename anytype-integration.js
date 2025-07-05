@@ -116,6 +116,11 @@ export default class AnytypeIntegration {
       }
       await this.showExportOptions();
     } catch (e) {
+      if (e.code === 'unauthorized') {
+        this.updateAnytypeStatus('error', 'API 认证失败，请重新配对');
+        await this.startPairingFlow();
+        return;
+      }
       alert('❌ ' + e.message);
     } finally {
       this.exportAnytypeBtn.disabled = false;
@@ -162,26 +167,35 @@ export default class AnytypeIntegration {
   }
 
   async showExportOptions() {
-    const spaces = await this.api.getSpaces();
-    const prefs = this.preferences[this.contentHandler.currentCategory] || {};
-    await this.populateSpaceSelect(spaces, prefs.spaceId, prefs.typeKey, prefs.templateId, prefs.selectedTags);
-    const multiple = this.contentHandler.selectedItemsForBatch.length > 1;
-    if (multiple) {
-      this.objectTitleGroup.classList.add('hidden');
-      this.objectListGroup.classList.remove('hidden');
-      this.objectList.innerHTML = '';
-      this.contentHandler.selectedItemsForBatch.forEach(item => {
-        const li = document.createElement('li');
-        li.textContent = item.title || '未命名';
-        this.objectList.appendChild(li);
-      });
-      this.objectTitleInput.value = `将创建 ${this.contentHandler.selectedItemsForBatch.length} 个对象`;
-    } else {
-      this.objectListGroup.classList.add('hidden');
-      this.objectTitleGroup.classList.remove('hidden');
-      this.objectTitleInput.value = this.contentHandler.generateDefaultTitle();
+    try {
+      const spaces = await this.api.getSpaces();
+      const prefs = this.preferences[this.contentHandler.currentCategory] || {};
+      await this.populateSpaceSelect(spaces, prefs.spaceId, prefs.typeKey, prefs.templateId, prefs.selectedTags);
+      const multiple = this.contentHandler.selectedItemsForBatch.length > 1;
+      if (multiple) {
+        this.objectTitleGroup.classList.add('hidden');
+        this.objectListGroup.classList.remove('hidden');
+        this.objectList.innerHTML = '';
+        this.contentHandler.selectedItemsForBatch.forEach(item => {
+          const li = document.createElement('li');
+          li.textContent = item.title || '未命名';
+          this.objectList.appendChild(li);
+        });
+        this.objectTitleInput.value = `将创建 ${this.contentHandler.selectedItemsForBatch.length} 个对象`;
+      } else {
+        this.objectListGroup.classList.add('hidden');
+        this.objectTitleGroup.classList.remove('hidden');
+        this.objectTitleInput.value = this.contentHandler.generateDefaultTitle();
+      }
+      this.showExportModal();
+    } catch (e) {
+      if (e.code === 'unauthorized') {
+        this.updateAnytypeStatus('error', 'API 认证失败，请重新配对');
+        await this.startPairingFlow();
+        return;
+      }
+      throw e;
     }
-    this.showExportModal();
   }
 
   async populateSpaceSelect(spaces, selectedId, selectedType, selectedTemplate, selectedTags) {
@@ -201,11 +215,19 @@ export default class AnytypeIntegration {
   }
 
   async onSpaceChange(selectedType, selectedTemplate, selectedTags) {
-    this.selectedSpaceId = this.spaceSelect.value;
-    const types = await this.api.getObjectTypes(this.selectedSpaceId);
-    await this.populateTypeSelect(types, selectedType, selectedTemplate);
-    // 加载标签
-    await this.loadTags(selectedTags);
+    try {
+      this.selectedSpaceId = this.spaceSelect.value;
+      const types = await this.api.getObjectTypes(this.selectedSpaceId);
+      await this.populateTypeSelect(types, selectedType, selectedTemplate);
+      await this.loadTags(selectedTags);
+    } catch (e) {
+      if (e.code === 'unauthorized') {
+        this.updateAnytypeStatus('error', 'API 认证失败，请重新配对');
+        await this.startPairingFlow();
+        return;
+      }
+      throw e;
+    }
   }
 
   async populateTypeSelect(types, selectedType, selectedTemplate) {
@@ -225,9 +247,18 @@ export default class AnytypeIntegration {
   }
 
   async onTypeChange(selectedTemplate) {
-    this.selectedTypeKey = this.typeSelect.value;
-    const templates = await this.api.getTemplates(this.selectedSpaceId, this.selectedTypeKey);
-    this.populateTemplateSelect(templates, selectedTemplate);
+    try {
+      this.selectedTypeKey = this.typeSelect.value;
+      const templates = await this.api.getTemplates(this.selectedSpaceId, this.selectedTypeKey);
+      this.populateTemplateSelect(templates, selectedTemplate);
+    } catch (e) {
+      if (e.code === 'unauthorized') {
+        this.updateAnytypeStatus('error', 'API 认证失败，请重新配对');
+        await this.startPairingFlow();
+        return;
+      }
+      throw e;
+    }
   }
 
   onTemplateChange() {
@@ -279,6 +310,11 @@ export default class AnytypeIntegration {
       this.populateTagSelect(tags, selectedTags);
       this.tagGroup.classList.remove('hidden');
     } catch (error) {
+      if (error.code === 'unauthorized') {
+        this.updateAnytypeStatus('error', 'API 认证失败，请重新配对');
+        await this.startPairingFlow();
+        return;
+      }
       console.error('❌ 加载标签失败:', error);
       this.tagGroup.classList.add('hidden');
     }
@@ -374,8 +410,13 @@ export default class AnytypeIntegration {
         
         // 重新加载标签列表
         await this.loadTags(this.selectedTags);
-        
+
       } catch (error) {
+        if (error.code === 'unauthorized') {
+          this.updateAnytypeStatus('error', 'API 认证失败，请重新配对');
+          await this.startPairingFlow();
+          return;
+        }
         alert('❌ 创建标签失败: ' + error.message);
         confirmBtn.disabled = false;
         confirmBtn.textContent = '✓';
@@ -480,6 +521,11 @@ export default class AnytypeIntegration {
       this.updatePreferences();
       alert('✅ 导出成功！对象已创建到 Anytype');
     } catch (e) {
+      if (e.code === 'unauthorized') {
+        this.updateAnytypeStatus('error', 'API 认证失败，请重新配对');
+        await this.startPairingFlow();
+        return;
+      }
       alert('❌ 导出失败: ' + e.message);
     }
   }
